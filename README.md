@@ -9,7 +9,7 @@ npx create-react-app client
 cd client
 npm i ethers styled-components react-router-dom
 ```
-# Modifier dans hardhat.config.js
+## Modifier dans hardhat.config.js
 ```
 module.exports = {
   solidity: '0.8.7',
@@ -36,7 +36,7 @@ module.exports = {
   },
 };
 ```
-# Fichier .env
+## Fichier .env
 ```
 PRIVATE_KEY=""
 INFURA="https://rinkeby.infura.io/v3/..."
