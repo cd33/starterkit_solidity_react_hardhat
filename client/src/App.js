@@ -1,27 +1,49 @@
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
-import Contract from './artifacts/contracts/Bibscoin.sol/Bibscoin.json'
+import Contract from './artifacts/contracts/Bibs721A.sol/Bibs721A.json'
 import Content from './components/Content'
-import Hello from './components/Hello'
-import Modal from './components/Modal'
-import NavbarCustom from './components/Navbar'
 import { Route, Routes } from 'react-router-dom'
 import * as s from './styles/global.style'
+import background from './assets/background.jpg'
+import background2 from './assets/background2.jpg'
 
-const address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+const { MerkleTree } = require('merkletreejs')
+const keccak256 = require('keccak256')
+const tokens = require('./tokens.json')
+const address = ''
+const owner = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' // attention aux miniscules, {accounts.length > 0 && console.log(accounts[0])}
 
 function App() {
   const [loader, setLoader] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [accounts, setAccounts] = useState([])
-  const [balance, setBalance] = useState(0)
-  const [modalShow, setModalShow] = useState(false)
-  const [titleModal, setTitleModal] = useState(false)
-  const [contentModal, setContentModal] = useState(false)
+  const [goodNetwork, setGoodNetwork] = useState(false)
+  const [sellingStep, setSellingStep] = useState(null)
+  const [whitelistPrice, setWhitelistPrice] = useState(0)
+  const [publicPrice, setPublicPrice] = useState(0)
+  const [maxSup, setMaxSup] = useState(null)
+  const [currentTotalSupply, setCurrentTotalSupply] = useState(null)
 
-  useEffect(() => {
-    getAccounts()
-    setLoader(false)
-  }, [])
+  async function getAccounts() {
+    // check if metamask o other exists
+    if (typeof window.ethereum !== 'undefined') {
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const { chainId } = await provider.getNetwork()
+      if (chainId !== 31337 && chainId !== 1 && chainId !== 4) {
+        setGoodNetwork(false)
+        setError('Please Switch to the ETH Mainnet Network')
+        return
+      } else {
+        setGoodNetwork(true)
+      }
+
+      let accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      })
+      setAccounts(accounts)
+    }
+  }
 
   window.ethereum.addListener('connect', async (response) => {
     getAccounts()
@@ -39,85 +61,277 @@ function App() {
     window.location.reload()
   })
 
-  async function getAccounts() {
-    // check if metamask o other exists
-    if (typeof window.ethereum !== 'undefined') {
-      let accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts',
-      })
-      setAccounts(accounts)
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const balance = await provider.getBalance(accounts[0])
-      const balanceInEth = ethers.utils.formatEther(balance)
-      setBalance(balanceInEth)
+  useEffect(() => {
+    async function getInfos() {
+      if (typeof window.ethereum !== 'undefined') {
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const contract = new ethers.Contract(address, Contract.abi, provider)
+        try {
+          const step = await contract.sellingStep()
+          setSellingStep(step)
+          const priceWhitelistSale = await contract.whitelistSalePrice()
+          setWhitelistPrice(priceWhitelistSale)
+          const pricePublicSale = await contract.publicSalePrice()
+          setPublicPrice(pricePublicSale)
+          const maxSup = await contract.MAX_SUPPLY()
+          setMaxSup(maxSup)
+          const totalSupply = await contract.totalSupply()
+          setCurrentTotalSupply(totalSupply)
+        } catch (error) {
+          console.log(error.message)
+        }
+      }
     }
-  }
 
-  async function mint() {
+    getAccounts()
+    getInfos()
+    setLoader(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     if (typeof window.ethereum !== 'undefined') {
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const contract = new ethers.Contract(address, Contract.abi, provider)
+      contract.on('Transfer', async () => {
+        const totalSupply = await contract.totalSupply()
+        setCurrentTotalSupply(totalSupply)
+      })
+    }
+  }, [accounts])
+
+  async function setStep(_step) {
+    if (typeof window.ethereum !== 'undefined') {
+      setLoading(true)
       const provider = new ethers.providers.Web3Provider(window.ethereum)
       const signer = provider.getSigner()
       const contract = new ethers.Contract(address, Contract.abi, signer)
 
       try {
-        const transaction = await contract.mint(
-          accounts[0],
-          ethers.utils.parseEther("1000"),
-          { from: accounts[0] },
-        )
+        const transaction = await contract.setStep(_step, { from: accounts[0] })
         await transaction.wait()
+        setLoading(false)
       } catch (error) {
-        handleModal('error', error.message)
+        console.log(error.message)
+        setLoading(false)
       }
     }
   }
 
-  const handleModal = (title, content) => {
-    setTitleModal(title)
-    setContentModal(content)
-    setModalShow(true)
+  async function whitelistSaleMint(_quantity) {
+    if (typeof window.ethereum !== 'undefined') {
+      setLoading(true)
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const signer = provider.getSigner()
+      const contract = new ethers.Contract(address, Contract.abi, signer)
+
+      let tab = []
+      tokens.map((token) => tab.push(token.address))
+      const leaves = tab.map((address) => keccak256(address))
+      const tree = new MerkleTree(leaves, keccak256, { sort: true })
+      const leaf = keccak256(accounts[0])
+      const proof = tree.getHexProof(leaf)
+
+      try {
+        let overrides = {
+          from: accounts[0],
+          value: whitelistPrice * _quantity,
+        }
+        const transaction = await contract.whitelistSaleMint(_quantity, proof, overrides)
+        await transaction.wait()
+        setLoading(false)
+      } catch (error) {
+        // var mySubString = error.message.substring(
+        //   error.message.indexOf('reverted: ') + 10,
+        //   error.message.lastIndexOf('","data'),
+        // )
+        if (error.data) {
+          var mySubString = error.data.message.substring(
+            error.data.message.indexOf("string '") + 8,
+            error.data.message.lastIndexOf(`'`),
+          )
+          setError(mySubString)
+        } else {
+          console.log(error.message)
+        }
+        setLoading(false)
+      }
+    }
+  }
+
+  async function publicSaleMint(_quantity) {
+    if (typeof window.ethereum !== 'undefined') {
+      setLoading(true)
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const signer = provider.getSigner()
+      const contract = new ethers.Contract(address, Contract.abi, signer)
+
+      try {
+        let overrides = {
+          from: accounts[0],
+          value: publicPrice * _quantity,
+          // value: ethers.utils.parseEther(calcul.toString()),
+        }
+        const transaction = await contract.publicSaleMint(_quantity, overrides)
+        await transaction.wait()
+        setLoading(false)
+      } catch (error) {
+        if (error.data) {
+          var mySubString = error.data.message.substring(
+            error.data.message.indexOf("string '") + 8,
+            error.data.message.lastIndexOf(`'`),
+          )
+          setError(mySubString)
+        } else {
+          console.log(error.message)
+        }
+        setLoading(false)
+      }
+    }
+  }
+
+  async function gift(_to, _quantity) {
+    if (typeof window.ethereum !== 'undefined') {
+      setLoading(true)
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const signer = provider.getSigner()
+      const contract = new ethers.Contract(address, Contract.abi, signer)
+
+      try {
+        let overrides = {
+          from: accounts[0],
+        }
+        const transaction = await contract.gift(_to, _quantity, overrides)
+        await transaction.wait()
+        setLoading(false)
+      } catch (error) {
+        console.log(error.message)
+        setLoading(false)
+      }
+    }
+  }
+
+  async function setBaseUri(_baseUri) {
+    if (typeof window.ethereum !== 'undefined') {
+      setLoading(true)
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const signer = provider.getSigner()
+      const contract = new ethers.Contract(address, Contract.abi, signer)
+
+      try {
+        let overrides = {
+          from: accounts[0],
+        }
+        const transaction = await contract.setBaseUri(_baseUri, overrides)
+        await transaction.wait()
+        setLoading(false)
+      } catch (error) {
+        console.log(error.message)
+        setLoading(false)
+      }
+    }
+  }
+
+  async function setMerkleRoot(_merkleRoot) {
+    if (typeof window.ethereum !== 'undefined') {
+      setLoading(true)
+      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const signer = provider.getSigner()
+      const contract = new ethers.Contract(address, Contract.abi, signer)
+
+      try {
+        let overrides = {
+          from: accounts[0],
+        }
+        const transaction = await contract.setMerkleRoot(_merkleRoot, overrides)
+        await transaction.wait()
+        setLoading(false)
+      } catch (error) {
+        console.log(error.message)
+        setLoading(false)
+      }
+    }
+  }
+
+  const handleMint = (_quantity) => {
+    if (goodNetwork) {
+      if (sellingStep === 1) {
+        whitelistSaleMint(_quantity)
+      } else if (sellingStep === 2) {
+        publicSaleMint(_quantity)
+      } else {
+        setError('The mint has not started')
+        return
+      }
+    } else {
+      setError('Please Switch to the Mainnet Network')
+    }
   }
 
   return (
-    <s.Screen>
-      <s.Container ai="center" flex={1} bc="#36468e" style={{ paddingTop: 80 }}>
-        {loader || !accounts ? (
-          <s.TextTitle style={{ alignSelf: 'center' }}>
-            Loading Web3, accounts, and contract...
-          </s.TextTitle>
-        ) : (
-          <Routes>
-            <Route path="/" element={<NavbarCustom accounts={accounts} />}>
-              <Route
-                index
-                element={
-                  <Content bibscoinBalance={balance} mintBibscoin={mint} />
-                }
+    <s.Screen style={{ alignItems: 'center', backgroundColor: '#1d476f' }}>
+      <s.Container
+        ai="center"
+        jc="center"
+        image={background}
+        style={{ minHeight: '70vh' }}
+      />
+      {loader || !accounts ? (
+        <s.Text
+          color="white"
+          fs="3em"
+          style={{ marginTop: '10vh', marginBottom: '10vh' }}
+        >
+          Loading Web3, accounts, and contract...
+        </s.Text>
+      ) : (
+        <Routes>
+          <Route
+            index
+            element={
+              <Content
+                ethers={ethers}
+                goodNetwork={goodNetwork}
+                error={error}
+                loading={loading}
+                accounts={accounts}
+                owner={owner}
+                sellingStep={sellingStep}
+                setStep={setStep}
+                handleMint={handleMint}
+                gift={gift}
+                setMerkleRoot={setMerkleRoot}
+                setBaseUri={setBaseUri}
+                maxSup={maxSup}
+                whitelistPrice={whitelistPrice}
+                publicPrice={publicPrice}
+                currentTotalSupply={currentTotalSupply}
               />
-              <Route path="hello" element={<Hello />} />
-              <Route
-                path="*"
-                element={
-                  <>
-                    <s.TextTitle fs="80" style={{ marginTop: 80 }}>
-                      Il n'y a rien ici !
-                    </s.TextTitle>
-                    <s.ButtonHome>
-                      <s.ButtonLink to="/">Accueil</s.ButtonLink>
-                    </s.ButtonHome>
-                  </>
-                }
-              />
-            </Route>
-          </Routes>
-        )}
-        <Modal
-          modalShow={modalShow}
-          setModalShow={setModalShow}
-          title={titleModal}
-          content={contentModal}
-        />
-      </s.Container>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <>
+                <s.Text color="white" fs="3em" style={{ marginTop: '5vh' }}>
+                  Il n'y a rien ici !
+                </s.Text>
+                <s.ButtonLink to="/">
+                  <s.Button
+                    style={{ marginBottom: '5vh', marginTop: '5vh' }}
+                    bc="rgba(18, 124, 255, 1)"
+                    width="15vw"
+                  >
+                    Accueil
+                  </s.Button>
+                </s.ButtonLink>
+              </>
+            }
+          />
+        </Routes>
+      )}
+
+      <s.Container image={background2} style={{ minHeight: '70vh' }} />
     </s.Screen>
   )
 }

@@ -10,9 +10,12 @@ INFURA="https://rinkeby.infura.io/v3/..."
 
 * Dans ./client:
   - Modifier "name" du package.json
-* Dans ./public:
+* Dans ./client/public:
   - Personnaliser index.html et manifest.json
   - Modifier les icons à l'aide du site https://realfavicongenerator.net/
+* Dans ./client/src:
+  - Changer address
+  - Changer chainId
 
 ### Les commandes à utiliser avant utilisation :
 ```
@@ -36,5 +39,5 @@ npm i hardhat @nomiclabs/hardhat-waffle ethereum-waffle chai @nomiclabs/hardhat-
 npx hardhat
 npx create-react-app client
 cd client
-npm i ethers styled-components react-router-dom
+npm i ethers styled-components react-router-dom keccak256 merkletreejs
 ```
