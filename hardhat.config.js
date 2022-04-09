@@ -1,5 +1,6 @@
 require('dotenv').config()
 require('@nomiclabs/hardhat-waffle')
+require('hardhat-contract-sizer')
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -18,26 +19,29 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: '0.8.7',
   paths: {
     artifacts: './client/src/artifacts',
   },
-  settings: {
-    optimizer: {
-      enabled: true,
-      runs: 1000000,
-    },
+  solidity: {
+    version: "0.8.7",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
   },
   mocha: {
-    timeout: 90000,
+    timeout: 40000,
   },
   networks: {
     hardhat: {
       chainId: 31337,
+      allowUnlimitedContractSize: true
     },
     rinkeby: {
       url: process.env.INFURA,
       accounts: [process.env.PRIVATE_KEY],
-    },  
+    }
   },
 }

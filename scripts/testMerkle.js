@@ -1,4 +1,3 @@
-const hre = require('hardhat')
 const { MerkleTree } = require('merkletreejs')
 const keccak256 = require('keccak256')
 const tokens = require('./tokens.json')
@@ -12,13 +11,11 @@ async function main() {
   const tree = new MerkleTree(leaves, keccak256, { sort: true })
   const root = tree.getHexRoot()
 
-  const Bibs721A = await hre.ethers.getContractFactory('Bibs721A')
-  const bibs721A = await Bibs721A.deploy(
-    root,
-    'ipfs://QmYkpa28u51JFnCjrnoaMf1LfyNiB9n5oSp6ERRQCX5eKE/',
-  )
-  await bibs721A.deployed()
-  console.log('Bibs721A deployed to:', bibs721A.address)
+  const leaf = keccak256("0xdB4D6160532835f8Be98f3682eD165D5Ce02ECf9")
+  const proof = tree.getHexProof(leaf)
+
+  console.log("root: ", root)
+  console.log("proof: ", proof)
 }
 
 // We recommend this pattern to be able to use async/await everywhere
