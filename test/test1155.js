@@ -12,7 +12,7 @@ describe('Bibs1155', function () {
     '0x69544beb25890c934579c67525db2c2f61ff18dc332f9d5412e8ec3282cbcc3b',
   ]
   const baseURI = 'ipfs://QmYkpa28u51JFnCjrnoaMf1LfyNiB9n5oSp6ERRQCX5eKE/'
-  const maxSupply = 12000;
+  const maxSupply = 6000;
   const whitelistSalePrice = ethers.utils.parseEther('0.01')
   const publicSalePrice = ethers.utils.parseEther('0.02')
   whitelistLimitBalance = 2
@@ -44,12 +44,6 @@ describe('Bibs1155', function () {
     await bibs.setStep(2)
     step = await bibs.sellingStep()
     expect(step).to.equal(2)
-    await bibs.setStep(3)
-    step = await bibs.sellingStep()
-    expect(step).to.equal(3)
-    await bibs.setStep(4)
-    step = await bibs.sellingStep()
-    expect(step).to.equal(4)
     await bibs.setStep(0)
     step = await bibs.sellingStep()
     expect(step).to.equal(0)
@@ -83,18 +77,20 @@ describe('Bibs1155', function () {
   })
 
   it('WhitelistMint whitelistSaleMint() tests argents', async function () {
-    await bibs.setStep(2)
-    balanceOwnerNFT = await bibs.balanceOf(owner.address, 2)
+    await network.provider.send("evm_setNextBlockTimestamp", [1652738400])
+    await ethers.provider.send('evm_mine')
+    await bibs.setStep(1)
+    balanceOwnerNFT = await bibs.balanceOf(owner.address, 1)
     expect(balanceOwnerNFT).to.equal(0)
     balanceOwnerETHBefore = await ethers.provider.getBalance(owner.address)
     balanceInvestorETHBefore = await ethers.provider.getBalance(
       investor.address,
     )
 
-    whiteMint = await bibs.whitelistSaleMint(proofOwner, 2, { value: 2 * whitelistSalePrice })
+    whiteMint = await bibs.whitelistSaleMint(proofOwner, 2, { value: (2 * whitelistSalePrice).toString() })
     await whiteMint.wait() // wait until the transaction is mined
 
-    balanceOwnerNFT = await bibs.balanceOf(owner.address, 2)
+    balanceOwnerNFT = await bibs.balanceOf(owner.address, 1)
     expect(balanceOwnerNFT).to.equal(2)
     balanceOwnerETHAfter = await ethers.provider.getBalance(owner.address)
     balanceInvestorETHAfter = await ethers.provider.getBalance(investor.address)
@@ -108,14 +104,14 @@ describe('Bibs1155', function () {
     ).to.be.revertedWith('Whitelist sale not active')
   })
 
-  it("REVERT: whitelistSaleMint() Quantity between 1 & 15", async function () {
-    await bibs.setStep(2)
-    await expect(bibs.whitelistSaleMint(proofOwner, 0, { value: whitelistSalePrice })).to.be.revertedWith("Quantity between 1 & 15")
-    await expect(bibs.whitelistSaleMint(proofOwner, 16, { value: whitelistSalePrice })).to.be.revertedWith("Quantity between 1 & 15")
+  it("REVERT: whitelistSaleMint() Quantity between 1 & 3", async function () {
+    await bibs.setStep(1)
+    await expect(bibs.whitelistSaleMint(proofOwner, 0, { value: whitelistSalePrice })).to.be.revertedWith("Quantity between 1 & 3")
+    await expect(bibs.whitelistSaleMint(proofOwner, 4, { value: whitelistSalePrice })).to.be.revertedWith("Quantity between 1 & 3")
   })
 
   it('REVERT: whitelistSaleMint() merkle access Not whitelisted', async function () {
-    await bibs.setStep(2)
+    await bibs.setStep(1)
     await expect(
       bibs
         .connect(investor)
@@ -123,45 +119,45 @@ describe('Bibs1155', function () {
     ).to.be.revertedWith('Not whitelisted')
   })
 
-  it('REVERT: whitelistSaleMint() Sold out et tests de balances', async function () {
-    await bibs.setStep(2)
-    currentIdNFT = await bibs.nextNFT2()
-    expect(currentIdNFT).to.equal(0)
-    balanceOwnerNFT = await bibs.balanceOf(owner.address, 2)
-    expect(balanceOwnerNFT).to.equal(0)
+//   it('REVERT: whitelistSaleMint() Sold out et tests de balances', async function () {
+//     await bibs.setStep(1)
+//     currentIdNFT = await bibs.nextNFT()
+//     expect(currentIdNFT).to.equal(0)
+//     balanceOwnerNFT = await bibs.balanceOf(owner.address, 1)
+//     expect(balanceOwnerNFT).to.equal(0)
 
-    await bibs.whitelistSaleMint(proofOwner, limitNFT2, {
-      value: (limitNFT2 * whitelistSalePrice).toString(),
-    })
-    currentIdNFT = await bibs.nextNFT2()
-    expect(currentIdNFT).to.equal(limitNFT2)
-    balanceOwnerNFT = await bibs.balanceOf(owner.address, 2)
-    expect(balanceOwnerNFT).to.equal(limitNFT2)
+//     await bibs.whitelistSaleMint(proofOwner, maxSupply, {
+//       value: (maxSupply * whitelistSalePrice).toString(),
+//     })
+//     currentIdNFT = await bibs.nextNFT()
+//     expect(currentIdNFT).to.equal(maxSupply)
+//     balanceOwnerNFT = await bibs.balanceOf(owner.address, 1)
+//     expect(balanceOwnerNFT).to.equal(maxSupply)
 
-    await expect(
-      bibs.whitelistSaleMint(proofOwner, 1, { value: whitelistSalePrice }),
-    ).to.be.revertedWith('Sold out')
-  })
+//     await expect(
+//       bibs.whitelistSaleMint(proofOwner, 1, { value: whitelistSalePrice }),
+//     ).to.be.revertedWith('Sold out')
+//   })
 
   it('REVERT: whitelistSaleMint() Not enough money', async function () {
-    await bibs.setStep(2)
+    await bibs.setStep(1)
     await expect(
-      bibs.whitelistSaleMint(proofOwner, 10, { value: whitelistSalePrice }),
+      bibs.whitelistSaleMint(proofOwner, 3, { value: whitelistSalePrice }),
     ).to.be.revertedWith('Not enough funds')
   })
 
   it('publicSaleMint publicSaleMint() tests argents', async function () {
-    await bibs.setStep(3)
-    balanceOwnerNFT = await bibs.balanceOf(owner.address, 3)
+    await bibs.setStep(2)
+    balanceOwnerNFT = await bibs.balanceOf(owner.address, 1)
     expect(balanceOwnerNFT).to.equal(0)
     balanceOwnerETHBefore = await ethers.provider.getBalance(owner.address)
     balanceInvestorETHBefore = await ethers.provider.getBalance(
       investor.address,
     )
 
-    publicSaleMint = await bibs.publicSaleMint(2, { value: 2 * publicSalePrice })
+    publicSaleMint = await bibs.publicSaleMint(2, { value: (2 * publicSalePrice).toString() })
     await publicSaleMint.wait() // wait until the transaction is mined
-    balanceOwnerNFT = await bibs.balanceOf(owner.address, 3)
+    balanceOwnerNFT = await bibs.balanceOf(owner.address, 1)
     expect(balanceOwnerNFT).to.equal(2)
 
     balanceOwnerETHAfter = await ethers.provider.getBalance(owner.address)
@@ -173,44 +169,44 @@ describe('Bibs1155', function () {
 
   it('REVERT: publicSaleMint() Not active', async function () {
     await expect(bibs.publicSaleMint(1, { value: publicSalePrice })).to.be.revertedWith(
-      'Public sale 1 not active',
+      'Public sale not active',
     )
   })
 
   it("REVERT: publicSaleMint() Quantity between 1 & 15", async function () {
-    await bibs.setStep(3)
+    await bibs.setStep(2)
     await expect(bibs.publicSaleMint(0, { value: publicSalePrice })).to.be.revertedWith("Quantity between 1 & 15")
     await expect(bibs.publicSaleMint(16, { value: publicSalePrice })).to.be.revertedWith("Quantity between 1 & 15")
   })
 
-  it('REVERT: publicSaleMint() Sold out et tests de balances', async function () {
-    await bibs.setStep(3)
-    currentIdNFT = await bibs.nextNFT3()
-    expect(currentIdNFT).to.equal(0)
-    balanceOwnerNFT = await bibs.balanceOf(owner.address, 3)
-    expect(balanceOwnerNFT).to.equal(0)
+//   it('REVERT: publicSaleMint() Sold out et tests de balances', async function () {
+//     await bibs.setStep(2)
+//     currentIdNFT = await bibs.nextNFT()
+//     expect(currentIdNFT).to.equal(0)
+//     balanceOwnerNFT = await bibs.balanceOf(owner.address, 1)
+//     expect(balanceOwnerNFT).to.equal(0)
 
-    await bibs.publicSaleMint(1500, { value: (1500 * publicSalePrice).toString() })
-    currentIdNFT = await bibs.nextNFT3()
-    expect(currentIdNFT).to.equal(1500)
-    balanceOwnerNFT = await bibs.balanceOf(owner.address, 3)
-    expect(balanceOwnerNFT).to.equal(1500)
+//     await bibs.publicSaleMint(1500, { value: (1500 * publicSalePrice).toString() })
+//     currentIdNFT = await bibs.nextNFT()
+//     expect(currentIdNFT).to.equal(1500)
+//     balanceOwnerNFT = await bibs.balanceOf(owner.address, 1)
+//     expect(balanceOwnerNFT).to.equal(1500)
 
-    await bibs
-      .connect(investor)
-      .publicSaleMint(500, { value: (500 * publicSalePrice).toString() })
-    currentIdNFT = await bibs.nextNFT3()
-    expect(currentIdNFT).to.equal(limitNFT3)
-    balanceInvestor = await bibs.balanceOf(investor.address, 3)
-    expect(balanceInvestor).to.equal(500)
+//     await bibs
+//       .connect(investor)
+//       .publicSaleMint(500, { value: (500 * publicSalePrice).toString() })
+//     currentIdNFT = await bibs.nextNFT()
+//     expect(currentIdNFT).to.equal(limitNFT3)
+//     balanceInvestor = await bibs.balanceOf(investor.address, 1)
+//     expect(balanceInvestor).to.equal(500)
 
-    await expect(bibs.publicSaleMint(1, { value: publicSalePrice })).to.be.revertedWith(
-      'Sold out',
-    )
-  })
+//     await expect(bibs.publicSaleMint(1, { value: publicSalePrice })).to.be.revertedWith(
+//       'Sold out',
+//     )
+//   })
 
   it('REVERT: publicSaleMint() Not enough money', async function () {
-    await bibs.setStep(3)
+    await bibs.setStep(2)
     await expect(bibs.publicSaleMint(10, { value: publicSalePrice })).to.be.revertedWith(
       'Not enough funds',
     )
@@ -219,67 +215,22 @@ describe('Bibs1155', function () {
   it("Gift gift()", async function () {
     balanceInvestorNFT = await bibs.balanceOf(investor.address, 1)
     expect(balanceInvestorNFT).to.equal(0)
-    await bibs.gift(investor.address, 10, 1)
+    await bibs.gift(investor.address, 1, 10, "")
     balanceInvestorNFT = await bibs.balanceOf(investor.address, 1)
     expect(balanceInvestorNFT).to.equal(10)
-    currentIdNFT = await bibs.nextNFT1()
-    expect(currentIdNFT).to.equal(10)
-
-    balanceInvestorNFT = await bibs.balanceOf(investor.address, 2)
-    expect(balanceInvestorNFT).to.equal(0)
-    await bibs.gift(investor.address, 10, 2)
-    balanceInvestorNFT = await bibs.balanceOf(investor.address, 2)
-    expect(balanceInvestorNFT).to.equal(10)
-    currentIdNFT = await bibs.nextNFT2()
-    expect(currentIdNFT).to.equal(10)
-
-    balanceInvestorNFT = await bibs.balanceOf(investor.address, 3)
-    expect(balanceInvestorNFT).to.equal(0)
-    await bibs.gift(investor.address, 10, 3)
-    balanceInvestorNFT = await bibs.balanceOf(investor.address, 3)
-    expect(balanceInvestorNFT).to.equal(10)
-    currentIdNFT = await bibs.nextNFT3()
-    expect(currentIdNFT).to.equal(10)
-
-    balanceInvestorNFT = await bibs.balanceOf(investor.address, 4)
-    expect(balanceInvestorNFT).to.equal(0)
-    await bibs.gift(investor.address, 10, 4)
-    balanceInvestorNFT = await bibs.balanceOf(investor.address, 4)
-    expect(balanceInvestorNFT).to.equal(10)
-    currentIdNFT = await bibs.nextNFT4()
+    currentIdNFT = await bibs.nextNFT()
     expect(currentIdNFT).to.equal(10)
   })
 
   it("REVERT: gift() Not Owner", async function () {
     await expect(
-      bibs.connect(investor).gift(investor.address, 10, 1),
+      bibs.connect(investor).gift(investor.address, 1, 10, ""),
     ).to.be.revertedWith("Ownable: caller is not the owner")
-  })
-
-  it("REVERT: gift() NFT doesn't exist", async function () {
-    await expect(
-      bibs.gift(investor.address, 10, 0),
-    ).to.be.revertedWith("NFT doesn't exist")
-    await expect(
-      bibs.gift(investor.address, 10, 5),
-    ).to.be.revertedWith("NFT doesn't exist")
   })
 
   it("REVERT: gift() NFT Sold out", async function () {
     await expect(
-      bibs.gift(investor.address, 1+limitNFT1, 1),
-    ).to.be.revertedWith("Sold out")
-
-    await expect(
-      bibs.gift(investor.address, 1+limitNFT2, 2),
-    ).to.be.revertedWith("Sold out")
-
-    await expect(
-      bibs.gift(investor.address, 1+limitNFT3, 3),
-    ).to.be.revertedWith("Sold out")
-
-    await expect(
-      bibs.gift(investor.address, 1+limitNFT4, 4),
+      bibs.gift(investor.address, 1, 1+maxSupply, ""),
     ).to.be.revertedWith("Sold out")
   })
 })

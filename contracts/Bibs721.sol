@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
 
 /// @title Bibs NFTs 721 collection
 /// @author cd33
-contract ERC721Merkle is ERC721, Ownable, IERC2981, PaymentSplitter {
+contract Bibs721 is ERC721, Ownable, IERC2981, PaymentSplitter {
 // ATTENTION CONTRAT NON TESTE, ECRIS A L'AVEUGLE
     using Strings for uint;
 
@@ -26,8 +26,8 @@ contract ERC721Merkle is ERC721, Ownable, IERC2981, PaymentSplitter {
     uint8 public whitelistLimitBalance = 2;
     uint16 public MAX_SUPPLY = 6530;
     uint16 public nextNFT;
-    uint256 public whitelistSalePrice = 0.00015 ether;
-    uint256 public publicSalePrice = 0.0002 ether;
+    uint256 public whitelistSalePrice = 0.01 ether;
+    uint256 public publicSalePrice = 0.02 ether;
 
     string private baseURI;
 
@@ -38,9 +38,9 @@ contract ERC721Merkle is ERC721, Ownable, IERC2981, PaymentSplitter {
 
     //Addresses of all the members of the team
     address[] private _team = [
-        0x5B38Da6a701c568545dCfcB03FcB875f56beddC4,
+        0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,
         0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,
-        0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db
+        0x90F79bf6EB2c4f870365E785982E1f101E93b906
     ];
 
     //Shares of all the members of the team

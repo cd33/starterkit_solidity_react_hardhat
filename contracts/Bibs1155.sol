@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 contract Bibs1155 is Ownable, ERC1155 {
     using Strings for uint256;
 
-    address private recipient = 0xD9453F5E2696604703076835496F81c3753C3Bb3;
+    address private recipient = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
 
     enum Step {
         Before,
@@ -24,7 +24,7 @@ contract Bibs1155 is Ownable, ERC1155 {
     uint8 constant NFT1 = 1;
 
     uint16 public nextNFT;
-    uint16 public maxSupply = 12000;
+    uint16 public maxSupply = 6000;
 
     uint32 public whitelistStartTime = 1652738400; // 17/05 à minuit
 
@@ -125,7 +125,8 @@ contract Bibs1155 is Ownable, ERC1155 {
         uint16 _quantity,
         string memory _name
     ) external onlyOwner {
-        require(_tokenId + _quantity <= maxSupply, "Sold out");
+        require(nextNFT + _quantity <= maxSupply, "Sold out");
+        nextNFT += _quantity;
         _mint(_to, _tokenId, _quantity, bytes(abi.encodePacked(_name)));
     }
 

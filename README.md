@@ -21,7 +21,6 @@ INFURA="https://rinkeby.infura.io/v3/..."
 ```
 npm init
 npm i hardhat @nomiclabs/hardhat-waffle ethereum-waffle chai @nomiclabs/hardhat-ethers ethers @openzeppelin/contracts dotenv hardhat-contract-sizer keccak256 merkletreejs prettier-plugin-solidity
-npx hardhat
 cd client
 npm install
 ```
@@ -41,3 +40,7 @@ npx create-react-app client
 cd client
 npm i ethers styled-components react-router-dom keccak256 merkletreejs
 ```
+
+### Evolutions futures :
+* Améliorer le ERC1155 avec d'autres NFTs
+* Améliorer les tests du 721 et tester son bon fonctionnement global
