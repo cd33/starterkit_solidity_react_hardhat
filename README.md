@@ -41,6 +41,7 @@ npx create-react-app client
 cd client
 npm i ethers styled-components react-router-dom keccak256 merkletreejs
 ```
+Modification de la version "react-scripts": "4.0.3", pour eviter l'erreur Buffer
 
 ### Evolutions futures :
 * Améliorer le ERC1155 avec d'autres NFTs
