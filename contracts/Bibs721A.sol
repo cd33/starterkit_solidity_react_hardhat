@@ -35,6 +35,11 @@ contract Bibs721A is Ownable, ERC721A, IERC2981 {
     mapping(address => uint8) public amountWhitelistSaleNftPerWallet;
 
     /**
+     * @notice Emitted when the step changed.
+     */
+    event StepChanged(uint8 _step);
+
+    /**
      * @notice Constructor of the contract ERC721A.
      * @param _merkleRoot Used for the whitelist.
      * @param _baseURI Metadatas for the ERC1155.
@@ -59,6 +64,7 @@ contract Bibs721A is Ownable, ERC721A, IERC2981 {
      */
     function setStep(uint8 _step) external onlyOwner {
         sellingStep = Step(_step);
+        emit StepChanged(_step);
     }
 
     /**

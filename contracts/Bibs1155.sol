@@ -38,6 +38,11 @@ contract Bibs1155 is Ownable, ERC1155 {
     bytes32 merkleRoot;
 
     /**
+     * @notice Emitted when the step changed.
+     */
+    event StepChanged(uint8 _step);
+
+    /**
      * @notice Constructor of the contract ERC1155.
      * @param _merkleRoot Used for the whitelist.
      * @param _baseURI Metadatas for the ERC1155.
@@ -48,11 +53,20 @@ contract Bibs1155 is Ownable, ERC1155 {
     }
 
     /**
+     * @notice Enables only externally owned accounts (= users) to mint.
+     */
+    modifier callerIsUser() {
+        require(tx.origin == msg.sender, "Caller is a contract");
+        _;
+    }
+
+    /**
      * @notice Allows to change the step of the contract.
      * @param _step Step to change.
      */
     function setStep(uint8 _step) external onlyOwner {
         sellingStep = Step(_step);
+        emit StepChanged(_step);
     }
 
     /**
@@ -126,6 +140,7 @@ contract Bibs1155 is Ownable, ERC1155 {
         string memory _name
     ) external onlyOwner {
         require(nextNFT + _quantity <= maxSupply, "Sold out");
+        require(_tokenId > 0 && _tokenId < 2, "NFT doesn't exist");
         nextNFT += _quantity;
         _mint(_to, _tokenId, _quantity, bytes(abi.encodePacked(_name)));
     }

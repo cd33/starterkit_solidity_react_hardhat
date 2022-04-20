@@ -50,6 +50,11 @@ contract Bibs721 is ERC721, Ownable, IERC2981, PaymentSplitter {
         10
     ];
 
+    /**
+     * @notice Emitted when the step changed.
+     */
+    event StepChanged(uint8 _step);
+
     constructor(bytes32 _merkleRoot, string memory _baseURI) ERC721("Bibs721", "BIBS") PaymentSplitter(_team, _teamShares) {
         merkleRoot = _merkleRoot;
         baseURI = _baseURI;
@@ -69,6 +74,7 @@ contract Bibs721 is ERC721, Ownable, IERC2981, PaymentSplitter {
      */
     function setStep(uint8 _step) external onlyOwner {
         sellingStep = Step(_step);
+        emit StepChanged(_step);
     }
 
     /**

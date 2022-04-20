@@ -165,3 +165,15 @@ export const Input = styled.input`
   border: none;
   border-radius: 3px;
 `
+
+export const NavbarLink = styled.p`
+  color: ${({ color }) => (color ? color : 'white')};
+  font-size: ${({ fs }) => (fs ? fs : '2em')};
+  text-align: center;
+  font-weight: ${({ fw }) => (fw ? fw : 700)};
+  margin: ${({ margin }) => (margin ? margin : 0)};
+
+  :hover {
+    color: rgba(18, 124, 255, 1);
+  }
+`

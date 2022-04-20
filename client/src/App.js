@@ -10,7 +10,7 @@ import background2 from './assets/background2.jpg'
 const { MerkleTree } = require('merkletreejs')
 const keccak256 = require('keccak256')
 const tokens = require('./tokens.json')
-const address = ''
+const address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
 const owner = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' // attention aux miniscules, {accounts.length > 0 && console.log(accounts[0])}
 
 function App() {
@@ -89,14 +89,25 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // EVENTS
   useEffect(() => {
-    if (typeof window.ethereum !== 'undefined') {
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const contract = new ethers.Contract(address, Contract.abi, provider)
-      contract.on('Transfer', async () => {
-        const totalSupply = await contract.totalSupply()
-        setCurrentTotalSupply(totalSupply)
-      })
+    if (accounts[0]) {
+      if (typeof window.ethereum !== 'undefined') {
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const contract = new ethers.Contract(address, Contract.abi, provider)
+        contract.on('StepChanged', (_step) => {
+          setSellingStep(_step)
+        })
+      }
+
+      if (typeof window.ethereum !== 'undefined') {
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const contract = new ethers.Contract(address, Contract.abi, provider)
+        contract.on('Transfer', async () => {
+          const totalSupply = await contract.totalSupply()
+          setCurrentTotalSupply(totalSupply)
+        })
+      }
     }
   }, [accounts])
 
@@ -112,7 +123,7 @@ function App() {
         await transaction.wait()
         setLoading(false)
       } catch (error) {
-        console.log(error.message)
+        console.log('error', error.message)
         setLoading(false)
       }
     }
@@ -137,7 +148,11 @@ function App() {
           from: accounts[0],
           value: whitelistPrice * _quantity,
         }
-        const transaction = await contract.whitelistSaleMint(_quantity, proof, overrides)
+        const transaction = await contract.whitelistSaleMint(
+          _quantity,
+          proof,
+          overrides,
+        )
         await transaction.wait()
         setLoading(false)
       } catch (error) {
@@ -154,6 +169,11 @@ function App() {
         } else {
           console.log(error.message)
         }
+        // if (error.data) {
+        //   setError(error.data.message)
+        // } else {
+        //   setError(error.message)
+        // }
         setLoading(false)
       }
     }
@@ -170,7 +190,6 @@ function App() {
         let overrides = {
           from: accounts[0],
           value: publicPrice * _quantity,
-          // value: ethers.utils.parseEther(calcul.toString()),
         }
         const transaction = await contract.publicSaleMint(_quantity, overrides)
         await transaction.wait()
@@ -253,6 +272,123 @@ function App() {
     }
   }
 
+   // async function setMaxSupply(_amount) {
+  //   if (typeof window.ethereum !== 'undefined') {
+  //     setLoading(true)
+  //     const provider = new ethers.providers.Web3Provider(window.ethereum)
+  //     const signer = provider.getSigner()
+  //     const contract = new ethers.Contract(address, Contract.abi, signer)
+
+  //     try {
+  //       let overrides = {
+  //         from: accounts[0],
+  //       }
+  //       const transaction = await contract.setMaxSupply(_amount, overrides)
+  //       await transaction.wait()
+  //       setLoading(false)
+  //     } catch (error) {
+  //       console.log(error.message)
+  //       setLoading(false)
+  //     }
+  //   }
+  // }
+
+  // async function setWhitelistSalePrice(_amount) {
+  //   if (typeof window.ethereum !== 'undefined') {
+  //     setLoading(true)
+  //     const provider = new ethers.providers.Web3Provider(window.ethereum)
+  //     const signer = provider.getSigner()
+  //     const contract = new ethers.Contract(address, Contract.abi, signer)
+
+  //     try {
+  //       let overrides = {
+  //         from: accounts[0],
+  //       }
+  //       const transaction = await contract.setWhitelistSalePrice(
+  //         _amount,
+  //         overrides,
+  //       )
+  //       await transaction.wait()
+  //       setLoading(false)
+  //     } catch (error) {
+  //       console.log(error.message)
+  //       setLoading(false)
+  //     }
+  //   }
+  // }
+
+  // async function setWhitelistLimitBalance(_amount) {
+  //   if (typeof window.ethereum !== 'undefined') {
+  //     setLoading(true)
+  //     const provider = new ethers.providers.Web3Provider(window.ethereum)
+  //     const signer = provider.getSigner()
+  //     const contract = new ethers.Contract(address, Contract.abi, signer)
+
+  //     try {
+  //       let overrides = {
+  //         from: accounts[0],
+  //       }
+  //       const transaction = await contract.setWhitelistLimitBalance(
+  //         _amount,
+  //         overrides,
+  //       )
+  //       await transaction.wait()
+  //       setLoading(false)
+  //     } catch (error) {
+  //       console.log(error.message)
+  //       setLoading(false)
+  //     }
+  //   }
+  // }
+
+  // async function setPublicSalePrice(_amount) {
+  //   if (typeof window.ethereum !== 'undefined') {
+  //     setLoading(true)
+  //     const provider = new ethers.providers.Web3Provider(window.ethereum)
+  //     const signer = provider.getSigner()
+  //     const contract = new ethers.Contract(address, Contract.abi, signer)
+
+  //     try {
+  //       let overrides = {
+  //         from: accounts[0],
+  //       }
+  //       const transaction = await contract.setPublicSalePrice(
+  //         _amount,
+  //         overrides,
+  //       )
+  //       await transaction.wait()
+  //       setLoading(false)
+  //     } catch (error) {
+  //       console.log(error.message)
+  //       setLoading(false)
+  //     }
+  //   }
+  // }
+
+  // async function setPublicSaleLimitBalance(_amount) {
+  //   if (typeof window.ethereum !== 'undefined') {
+  //     setLoading(true)
+  //     const provider = new ethers.providers.Web3Provider(window.ethereum)
+  //     const signer = provider.getSigner()
+  //     const contract = new ethers.Contract(address, Contract.abi, signer)
+
+  //     try {
+  //       let overrides = {
+  //         from: accounts[0],
+  //       }
+  //       const transaction = await contract.setPublicSaleLimitBalance(
+  //         _amount,
+  //         overrides,
+  //       )
+  //       await transaction.wait()
+  //       setLoading(false)
+  //     } catch (error) {
+  //       console.log(error.message)
+  //       setLoading(false)
+  //     }
+  //   }
+  // }
+
   const handleMint = (_quantity) => {
     if (goodNetwork) {
       if (sellingStep === 1) {
@@ -270,20 +406,23 @@ function App() {
 
   return (
     <s.Screen style={{ alignItems: 'center', backgroundColor: '#1d476f' }}>
-      <s.Container
-        ai="center"
-        jc="center"
-        image={background}
-        style={{ minHeight: '70vh' }}
-      />
       {loader || !accounts ? (
-        <s.Text
-          color="white"
-          fs="3em"
-          style={{ marginTop: '10vh', marginBottom: '10vh' }}
-        >
-          Loading Web3, accounts, and contract...
-        </s.Text>
+        <>
+          <s.Container
+            ai="center"
+            jc="center"
+            image={background}
+            style={{ minHeight: '70vh' }}
+          />
+          <s.Text
+            color="white"
+            fs="3em"
+            style={{ marginTop: '10vh', marginBottom: '10vh' }}
+          >
+            Waiting for connection with Metamask...
+          </s.Text>
+          <s.Container image={background2} style={{ minHeight: '70vh' }} />
+        </>
       ) : (
         <Routes>
           <Route
@@ -313,8 +452,14 @@ function App() {
             path="*"
             element={
               <>
+                <s.Container
+                  ai="center"
+                  jc="center"
+                  image={background}
+                  style={{ minHeight: '70vh' }}
+                />
                 <s.Text color="white" fs="3em" style={{ marginTop: '5vh' }}>
-                  Il n'y a rien ici !
+                There is nothing here
                 </s.Text>
                 <s.ButtonLink to="/">
                   <s.Button
@@ -322,16 +467,18 @@ function App() {
                     bc="rgba(18, 124, 255, 1)"
                     width="15vw"
                   >
-                    Accueil
+                    Home
                   </s.Button>
                 </s.ButtonLink>
+                <s.Container
+                  image={background2}
+                  style={{ minHeight: '70vh' }}
+                />
               </>
             }
           />
         </Routes>
       )}
-
-      <s.Container image={background2} style={{ minHeight: '70vh' }} />
     </s.Screen>
   )
 }
