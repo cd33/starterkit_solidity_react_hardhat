@@ -19,6 +19,7 @@ INFURA="https://rinkeby.infura.io/v3/..."
 
 ### Les commandes à utiliser avant utilisation :
 ```
+git init
 npm init
 npm i hardhat @nomiclabs/hardhat-waffle ethereum-waffle chai @nomiclabs/hardhat-ethers ethers @openzeppelin/contracts dotenv hardhat-contract-sizer keccak256 merkletreejs prettier-plugin-solidity
 cd client
