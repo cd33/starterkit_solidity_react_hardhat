@@ -22,6 +22,7 @@ INFURA="https://rinkeby.infura.io/v3/..."
 git init
 npm init
 npm i hardhat @nomiclabs/hardhat-waffle ethereum-waffle chai @nomiclabs/hardhat-ethers ethers @openzeppelin/contracts dotenv hardhat-contract-sizer keccak256 merkletreejs prettier-plugin-solidity
+npm install --save-dev @nomiclabs/hardhat-etherscan
 cd client
 npm install
 ```

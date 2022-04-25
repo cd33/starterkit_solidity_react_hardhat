@@ -7,6 +7,7 @@ import background2 from '../assets/background2.jpg'
 
 const Content = ({
   ethers,
+  getAccounts,
   goodNetwork,
   error,
   loading,
@@ -91,6 +92,14 @@ const Content = ({
           </s.Text>
         ) : (
           <>
+          {accounts.length <= 0 ? (
+                <s.Button
+                  style={{ minWidth: 300, marginTop: '10vh', marginBottom: '10vh', zIndex: 1 }}
+                  onClick={() => getAccounts()}
+                >
+                  CONNECT YOUR WALLET
+                </s.Button>
+              ) : (<>
             {sellingStep !== 1 && sellingStep !== 2 ? (
               <s.Text
                 fs="4em"
@@ -419,6 +428,8 @@ const Content = ({
           </div> */}
           </>
         )}
+        </>
+          )}
       </s.Container>
       <s.Container image={background2} style={{ minHeight: '70vh' }} />
     </>

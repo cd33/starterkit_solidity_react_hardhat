@@ -11,10 +11,9 @@ const { MerkleTree } = require('merkletreejs')
 const keccak256 = require('keccak256')
 const tokens = require('./tokens.json')
 const address = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
-const owner = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' // attention aux miniscules, {accounts.length > 0 && console.log(accounts[0])}
+const owner = '0xdb4d6160532835f8be98f3682ed165d5ce02ecf9' // attention aux miniscules, {accounts.length > 0 && console.log(accounts[0])}
 
 function App() {
-  const [loader, setLoader] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [accounts, setAccounts] = useState([])
@@ -45,21 +44,22 @@ function App() {
     }
   }
 
-  window.ethereum.addListener('connect', async (response) => {
-    getAccounts()
-  })
+  // // COMMENTED BECAUSE BLACK SCREEN ON MOBILE
+  // window.ethereum.addListener('connect', async (response) => {
+  //   getAccounts()
+  // })
 
-  window.ethereum.on('accountsChanged', () => {
-    window.location.reload()
-  })
+  // window.ethereum.on('accountsChanged', () => {
+  //   window.location.reload()
+  // })
 
-  window.ethereum.on('chainChanged', () => {
-    window.location.reload()
-  })
+  // window.ethereum.on('chainChanged', () => {
+  //   window.location.reload()
+  // })
 
-  window.ethereum.on('disconnect', () => {
-    window.location.reload()
-  })
+  // window.ethereum.on('disconnect', () => {
+  //   window.location.reload()
+  // })
 
   useEffect(() => {
     async function getInfos() {
@@ -67,6 +67,14 @@ function App() {
         const provider = new ethers.providers.Web3Provider(window.ethereum)
         const contract = new ethers.Contract(address, Contract.abi, provider)
         try {
+          const { chainId } = await provider.getNetwork()
+          if (chainId !== 31337 && chainId !== 1 && chainId !== 4) {
+            setGoodNetwork(false)
+            setError('Please Switch to the ETH Mainnet Network')
+            return
+          } else {
+            setGoodNetwork(true)
+          }
           const step = await contract.sellingStep()
           setSellingStep(step)
           const priceWhitelistSale = await contract.whitelistSalePrice()
@@ -83,9 +91,8 @@ function App() {
       }
     }
 
-    getAccounts()
+    // getAccounts()
     getInfos()
-    setLoader(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -272,7 +279,7 @@ function App() {
     }
   }
 
-   // async function setMaxSupply(_amount) {
+  // async function setMaxSupply(_amount) {
   //   if (typeof window.ethereum !== 'undefined') {
   //     setLoading(true)
   //     const provider = new ethers.providers.Web3Provider(window.ethereum)
@@ -390,7 +397,7 @@ function App() {
   // }
 
   const handleMint = (_quantity) => {
-    if (goodNetwork) {
+    if (accounts[0] && goodNetwork) {
       if (sellingStep === 1) {
         whitelistSaleMint(_quantity)
       } else if (sellingStep === 2) {
@@ -400,85 +407,64 @@ function App() {
         return
       }
     } else {
-      setError('Please Switch to the Mainnet Network')
+      setError('Connect Your Wallet')
     }
   }
 
   return (
     <s.Screen style={{ alignItems: 'center', backgroundColor: '#1d476f' }}>
-      {loader || !accounts ? (
-        <>
-          <s.Container
-            ai="center"
-            jc="center"
-            image={background}
-            style={{ minHeight: '70vh' }}
-          />
-          <s.Text
-            color="white"
-            fs="3em"
-            style={{ marginTop: '10vh', marginBottom: '10vh' }}
-          >
-            Waiting for connection with Metamask...
-          </s.Text>
-          <s.Container image={background2} style={{ minHeight: '70vh' }} />
-        </>
-      ) : (
-        <Routes>
-          <Route
-            index
-            element={
-              <Content
-                ethers={ethers}
-                goodNetwork={goodNetwork}
-                error={error}
-                loading={loading}
-                accounts={accounts}
-                owner={owner}
-                sellingStep={sellingStep}
-                setStep={setStep}
-                handleMint={handleMint}
-                gift={gift}
-                setMerkleRoot={setMerkleRoot}
-                setBaseUri={setBaseUri}
-                maxSup={maxSup}
-                whitelistPrice={whitelistPrice}
-                publicPrice={publicPrice}
-                currentTotalSupply={currentTotalSupply}
+      <Routes>
+        <Route
+          index
+          element={
+            <Content
+              ethers={ethers}
+              getAccounts={getAccounts}
+              goodNetwork={goodNetwork}
+              error={error}
+              loading={loading}
+              accounts={accounts}
+              owner={owner}
+              sellingStep={sellingStep}
+              setStep={setStep}
+              handleMint={handleMint}
+              gift={gift}
+              setMerkleRoot={setMerkleRoot}
+              setBaseUri={setBaseUri}
+              maxSup={maxSup}
+              whitelistPrice={whitelistPrice}
+              publicPrice={publicPrice}
+              currentTotalSupply={currentTotalSupply}
+            />
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <>
+              <s.Container
+                ai="center"
+                jc="center"
+                image={background}
+                style={{ minHeight: '70vh' }}
               />
-            }
-          />
-          <Route
-            path="*"
-            element={
-              <>
-                <s.Container
-                  ai="center"
-                  jc="center"
-                  image={background}
-                  style={{ minHeight: '70vh' }}
-                />
-                <s.Text color="white" fs="3em" style={{ marginTop: '5vh' }}>
+              <s.Text color="white" fs="3em" style={{ marginTop: '5vh' }}>
                 There is nothing here
-                </s.Text>
-                <s.ButtonLink to="/">
-                  <s.Button
-                    style={{ marginBottom: '5vh', marginTop: '5vh' }}
-                    bc="rgba(18, 124, 255, 1)"
-                    width="15vw"
-                  >
-                    Home
-                  </s.Button>
-                </s.ButtonLink>
-                <s.Container
-                  image={background2}
-                  style={{ minHeight: '70vh' }}
-                />
-              </>
-            }
-          />
-        </Routes>
-      )}
+              </s.Text>
+              <s.ButtonLink to="/">
+                <s.Button
+                  style={{ marginBottom: '5vh', marginTop: '5vh' }}
+                  bc="rgba(18, 124, 255, 1)"
+                  width="15vw"
+                >
+                  Home
+                </s.Button>
+              </s.ButtonLink>
+              <s.Container image={background2} style={{ minHeight: '70vh' }} />
+            </>
+          }
+        />
+      </Routes>
     </s.Screen>
   )
 }

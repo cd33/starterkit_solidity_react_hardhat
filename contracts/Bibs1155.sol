@@ -97,7 +97,7 @@ contract Bibs1155 is Ownable, ERC1155 {
      * @param _proof Merkle Proof.
      * @param _quantity Number of tokens to mint.
      */
-    function whitelistSaleMint(bytes32[] calldata _proof, uint8 _quantity) external payable {
+    function whitelistSaleMint(bytes32[] calldata _proof, uint8 _quantity) external payable callerIsUser {
         require(block.timestamp >= whitelistStartTime, "Whitelist Sale has not started yet");
         require(block.timestamp < whitelistStartTime + 1 days, "Whitelist Sale is finished");
         require(sellingStep == Step.WhitelistSale, "Whitelist sale not active");
@@ -116,7 +116,7 @@ contract Bibs1155 is Ownable, ERC1155 {
      * @notice Mint in BNB during the public sale 1.
      * @param _quantity Number of tokens to mint.
      */
-    function publicSaleMint(uint16 _quantity) external payable {
+    function publicSaleMint(uint16 _quantity) external payable callerIsUser {
         require(sellingStep == Step.PublicSale, "Public sale not active");
         require(_quantity > 0 && _quantity < 16, "Quantity between 1 & 15");
         require(nextNFT + _quantity <= maxSupply, "Sold out");
@@ -138,7 +138,7 @@ contract Bibs1155 is Ownable, ERC1155 {
         uint16 _tokenId,
         uint16 _quantity,
         string memory _name
-    ) external onlyOwner {
+    ) external onlyOwner callerIsUser {
         require(nextNFT + _quantity <= maxSupply, "Sold out");
         require(_tokenId > 0 && _tokenId < 2, "NFT doesn't exist");
         nextNFT += _quantity;

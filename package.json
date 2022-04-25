@@ -1,4 +1,6 @@
 {
   "name": "starterkit_solidity_react_hardhat",
-  "dependencies": {}
+  "dependencies": {
+    "hardhat-gas-reporter": "^1.0.8"
+  }
 }
